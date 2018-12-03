@@ -31,7 +31,7 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 	private var interactiveTransition: SlideDownDismissalInteractiveTransitioning?
 	private var arrowView: ArrowView?
 
-	override init(presentedViewController: UIViewController, presenting presentingViewController: UIViewController?) {
+	override public init(presentedViewController: UIViewController, presenting presentingViewController: UIViewController?) {
 		presentedViewController.modalPresentationStyle = .custom
 		super.init(presentedViewController: presentedViewController, presenting: presentingViewController)
 	}

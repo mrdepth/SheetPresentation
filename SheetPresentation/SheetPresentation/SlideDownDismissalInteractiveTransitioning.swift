@@ -8,17 +8,17 @@
 
 import Foundation
 
-class SlideDownDismissalInteractiveTransitioning: UIPercentDrivenInteractiveTransition {
+open class SlideDownDismissalInteractiveTransitioning: UIPercentDrivenInteractiveTransition {
 	static var associationKey = "slideDownDismissalInteractiveTransitioning"
 	weak var viewController: UIViewController?
 	
-	class func add(to viewController: UIViewController) {
+	open class func add(to viewController: UIViewController) {
 		let interactor = SlideDownDismissalInteractiveTransitioning(viewController: viewController)
 		viewController.transitioningDelegate = interactor
 		objc_setAssociatedObject(viewController, &SlideDownDismissalInteractiveTransitioning.associationKey, interactor, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
 	}
 	
-	init(viewController: UIViewController) {
+	public init(viewController: UIViewController) {
 		self.viewController = viewController
 		super.init()
 		let recognizer = UIPanGestureRecognizer(target: self, action: #selector(onPan(_:)))
@@ -28,7 +28,7 @@ class SlideDownDismissalInteractiveTransitioning: UIPercentDrivenInteractiveTran
 	
 	fileprivate(set) var isInteractive: Bool = false
 	
-	override func startInteractiveTransition(_ transitionContext: UIViewControllerContextTransitioning) {
+	override open func startInteractiveTransition(_ transitionContext: UIViewControllerContextTransitioning) {
 		super.startInteractiveTransition(transitionContext)
 	}
 	
@@ -77,21 +77,21 @@ class SlideDownDismissalInteractiveTransitioning: UIPercentDrivenInteractiveTran
 
 extension SlideDownDismissalInteractiveTransitioning: UIViewControllerTransitioningDelegate {
 	
-	func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+	public func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
 		return isInteractive ? self : nil
 	}
 	
-	func interactionControllerForDismissal(using animator: UIViewControllerAnimatedTransitioning) -> UIViewControllerInteractiveTransitioning? {
+	public func interactionControllerForDismissal(using animator: UIViewControllerAnimatedTransitioning) -> UIViewControllerInteractiveTransitioning? {
 		return isInteractive ? self : nil
 	}
 }
 
 extension SlideDownDismissalInteractiveTransitioning: UIViewControllerAnimatedTransitioning {
-	func transitionDuration(using transitionContext: UIViewControllerContextTransitioning?) -> TimeInterval {
+	public func transitionDuration(using transitionContext: UIViewControllerContextTransitioning?) -> TimeInterval {
 		return transitionContext?.isAnimated == true ? 0.25 : 0
 	}
 	
-	func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
+	public func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
 		guard let from = transitionContext.view(forKey: .from),
 			let fromVC = transitionContext.viewController(forKey: .from)
 			else {return}
@@ -111,7 +111,7 @@ extension SlideDownDismissalInteractiveTransitioning: UIViewControllerAnimatedTr
 
 extension SlideDownDismissalInteractiveTransitioning: UIGestureRecognizerDelegate {
 	
-	func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+	public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
 		if viewController?.presentationController is UIPopoverPresentationController && viewController?.traitCollection.userInterfaceIdiom == .pad && viewController?.presentingViewController?.traitCollection.horizontalSizeClass == .regular {
 			return false
 		}
@@ -129,11 +129,11 @@ extension SlideDownDismissalInteractiveTransitioning: UIGestureRecognizerDelegat
 		return hitTest?.ancestor(of: UIPickerView.self) == nil
 	}
 	
-	func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+	public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
 		return true
 	}
 	
-	func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+	public func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
 		guard otherGestureRecognizer is UIPanGestureRecognizer else {return false}
 		return true
 	}
