@@ -8,8 +8,6 @@
 
 import Foundation
 
-
-
 open class SheetPresentationController: UIPresentationController, UIViewControllerTransitioningDelegate, UIViewControllerAnimatedTransitioning {
 	
 	open var sourceView: UIView?
@@ -27,7 +25,7 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 
 	private var dimmingView: UIView?
 	private var presentationWrappingView: UIView?
-	private var presentationRoundedCornerView: UIView?
+	private var presentationRoundedCornerView: ClippingView?
 	private var presentedViewControllerWrappingView: UIView?
 	private var keyboardFrame: CGRect = .zero
 	private var interactiveTransition: SlideDownDismissalInteractiveTransitioning?
@@ -56,11 +54,11 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 			presentationWrappingView.layer.shadowColor = shadowColor?.cgColor ?? UIColor.black.cgColor
 			self.presentationWrappingView = presentationWrappingView
 			
-			let presentationRoundedCornerView = UIView(frame: presentationWrappingView.bounds)
+			let presentationRoundedCornerView = ClippingView(frame: presentationWrappingView.bounds)
 			presentationRoundedCornerView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
 			
-			presentationRoundedCornerView.layer.cornerRadius = cornerRadius
-			presentationRoundedCornerView.layer.maskedCorners = (isPopoverStyle ? UIRectCorner.allCorners : maskedCorners).cornerMask
+			presentationRoundedCornerView.cornerRadius = cornerRadius
+			presentationRoundedCornerView.maskedCorners = isPopoverStyle ? UIRectCorner.allCorners : maskedCorners
 			presentationRoundedCornerView.layer.masksToBounds = true
 			presentationRoundedCornerView.backgroundColor = backgroundColor ?? .white
 			
@@ -250,12 +248,15 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 			$0?.layoutIfNeeded()
 		}
 		
+		let animateArrow = arrowView != nil
 		if isPopoverStyle {
 			if arrowView == nil {
-				let arrowView = ArrowView(frame: .zero)
-				arrowView.sizeToFit()
-				presentationWrappingView?.addSubview(arrowView)
-				self.arrowView = arrowView
+				UIView.performWithoutAnimation {
+					let arrowView = ArrowView(frame: .zero)
+					arrowView.sizeToFit()
+					presentationWrappingView?.insertSubview(arrowView, at: 0)
+					self.arrowView = arrowView
+				}
 			}
 		}
 		else if let arrowView = arrowView, !isPopoverStyle {
@@ -278,7 +279,6 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 			
 			if let presentationRoundedCornerView = presentationRoundedCornerView {
 				if let arrowView = arrowView {
-					self.arrowView?.sizeToFit()
 					
 					switch arrowView.arrowDirection {
 					case .left:
@@ -290,8 +290,18 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 					case .down:
 						presentationRoundedCornerView.frame = presentationWrappingView.bounds.inset(by: UIEdgeInsets(top: 0, left: 0, bottom: arrowView.height, right: 0))
 					}
-					
-					arrowView.center = arrowPosition
+
+					let fitArrow = {
+						self.arrowView?.sizeToFit()
+						arrowView.center = self.arrowPosition
+					}
+
+					if animateArrow {
+						fitArrow()
+					}
+					else {
+						UIView.performWithoutAnimation(fitArrow)
+					}
 				}
 				else {
 					presentationRoundedCornerView.frame = presentationWrappingView.bounds
@@ -303,7 +313,7 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 	
 	open override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
 		super.traitCollectionDidChange(previousTraitCollection)
-		self.presentationRoundedCornerView?.layer.maskedCorners = (isPopoverStyle ? UIRectCorner.allCorners : maskedCorners).cornerMask
+		self.presentationRoundedCornerView?.maskedCorners = isPopoverStyle ? UIRectCorner.allCorners : maskedCorners
 	}
 	
 	//MARK: - UIViewControllerAnimatedTransitioning
@@ -509,4 +519,58 @@ extension UIRectCorner {
 	var cornerMask: CACornerMask {
 		return CACornerMask(rawValue: rawValue)
 	}
+}
+
+
+class ClippingView: UIView {
+	
+	var maskedCorners: UIRectCorner = [.topLeft, .topRight] {
+		didSet {
+			if #available(iOS 11.0, *) {
+				layer.maskedCorners = maskedCorners.cornerMask
+			} else {
+				setNeedsLayout()
+			}
+		}
+	}
+	
+	var maskLayer: CAShapeLayer?
+	
+	var cornerRadius: CGFloat = 16 {
+		didSet {
+			if #available(iOS 11.0, *) {
+				layer.cornerRadius = cornerRadius
+			}
+			else {
+				setNeedsLayout()
+			}
+		}
+	}
+
+	override init(frame: CGRect) {
+		super.init(frame: frame)
+		if #available(iOS 11.0, *) {
+		}
+		else {
+			maskLayer = CAShapeLayer()
+			maskLayer?.frame = bounds
+			layer.mask = maskLayer
+		}
+	}
+	
+	required init?(coder aDecoder: NSCoder) {
+		super.init(coder: aDecoder)
+	}
+
+	override func layoutSubviews() {
+		super.layoutSubviews()
+		if #available(iOS 11.0, *) {
+		}
+		else {
+			maskLayer?.frame = layer.bounds
+			maskLayer?.path = UIBezierPath(roundedRect: bounds, byRoundingCorners: maskedCorners, cornerRadii: CGSize(width: cornerRadius, height: cornerRadius)).cgPath
+		}
+	}
+	
+	
 }
