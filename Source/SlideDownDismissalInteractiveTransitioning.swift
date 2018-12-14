@@ -122,7 +122,8 @@ extension SlideDownDismissalInteractiveTransitioning: UIGestureRecognizerDelegat
 		guard (viewController?.children.last as? UITableViewController)?.refreshControl == nil else {return false}
 		
 		let hitTest = gestureRecognizer.view?.hitTest(gestureRecognizer.location(in: gestureRecognizer.view), with: nil)
-		if let scrollView = hitTest?.ancestor(of: UIScrollView.self), scrollView.contentOffset.y > -scrollView.contentInset.top {
+		if let scrollView = sequence(first: hitTest, next: {$0?.superview}).first(where: {($0 as? UIScrollView)?.isScrollEnabled == true}) as? UIScrollView,
+			scrollView.contentOffset.y > -scrollView.contentInset.top {
 			return false
 		}
 		
