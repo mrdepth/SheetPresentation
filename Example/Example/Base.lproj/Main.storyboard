@@ -88,6 +88,9 @@
                     </view>
                     <navigationItem key="navigationItem" id="sur-NV-6mh"/>
                     <value key="contentSizeForViewInPopover" type="size" width="300" height="320"/>
+                    <connections>
+                        <outlet property="textField" destination="y3M-dF-rIR" id="K0C-KW-9TH"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="JDQ-e6-YHh" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>

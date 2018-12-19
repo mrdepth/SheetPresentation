@@ -10,6 +10,7 @@ import UIKit
 
 
 class ModalViewController: UIViewController {
+	@IBOutlet weak var textField: UITextField!
 	override func viewDidLoad() {
 		super.viewDidLoad()
 	}
@@ -21,5 +22,12 @@ class ModalViewController: UIViewController {
 		size.height -= navigationController?.navigationBar.bounds.height ?? 0
 		navigationController?.preferredContentSize = .zero //strange behavior of UINavigationController
 		preferredContentSize = size
+	}
+	
+	override func viewWillAppear(_ animated: Bool) {
+		super.viewWillAppear(animated)
+		DispatchQueue.main.async {
+			self.textField.becomeFirstResponder()
+		}
 	}
 }

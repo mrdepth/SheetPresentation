@@ -92,18 +92,18 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 				dimmingView.alpha = 1.0
 			}, completion: nil)
 		}
+		
+		let center = NotificationCenter.default
+		center.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+		center.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+		center.addObserver(self, selector: #selector(keyboardWillChangeFrame(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
+
 	}
 	
 	override open func presentationTransitionDidEnd(_ completed: Bool) {
 		if !completed {
 			presentationWrappingView = nil;
 			dimmingView = nil;
-		}
-		else {
-			let center = NotificationCenter.default
-			center.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
-			center.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
-			center.addObserver(self, selector: #selector(keyboardWillChangeFrame(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
 		}
 	}
 	
@@ -308,7 +308,6 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 				}
 			}
 		}
-		
 	}
 	
 	open override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -358,7 +357,6 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 				fromViewFinalFrame.origin =  CGPoint(x: fromView?.frame.origin.x ?? 0, y: containerView.bounds.maxY)
 			}
 		}
-		
 		
 		let transitionDuration = self.transitionDuration(using: transitionContext)
 		UIView.animate(withDuration: transitionDuration, delay: 0, options: interactiveTransition?.isInteractive == true ? [.curveLinear] : [.curveEaseOut], animations: {
