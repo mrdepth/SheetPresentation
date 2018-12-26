@@ -157,9 +157,8 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 		if !isPopoverStyle {
 			presentedViewControllerFrame.origin.y = containerViewBounds.maxY - presentedViewContentSize.height - insets.bottom
 			presentedViewControllerFrame.origin.x = (containerViewBounds.maxX - presentedViewContentSize.width) / 2
-//			presentedViewControllerFrame.size.height += cornerRadius * 2
 			
-			presentedViewControllerFrame.origin.y -= keyboardFrame.size.height;
+			presentedViewControllerFrame.origin.y -= keyboardFrame.intersection(containerViewBounds).height
 			if (presentedViewControllerFrame.origin.y <= 40) {
 				presentedViewControllerFrame.size.height -= 40 - presentedViewControllerFrame.origin.y;
 				presentedViewControllerFrame.origin.y = 40;
@@ -211,7 +210,7 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 				presentedViewControllerFrame.size.height = presentedViewContentSize.height + arrowHeight
 			}
 			
-			presentedViewControllerFrame.origin.y -= max(presentedViewControllerFrame.maxY + max(insets.bottom, 15) - (containerView.bounds.maxY - keyboardFrame.size.height), 0)
+			presentedViewControllerFrame.origin.y -= max(presentedViewControllerFrame.maxY + max(insets.bottom, 15) - keyboardFrame.intersection(containerViewBounds).height, 0)
 			
 			//Reduce height if needed
 			if presentedViewControllerFrame.minY < safeArea.minY {
