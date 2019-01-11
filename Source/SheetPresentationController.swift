@@ -107,10 +107,42 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 		}
 	}
 	
+	private var keyboardSnapshotView: UIView?
+	private var lastFirstResponder: UIView?
+	
 	override open func dismissalTransitionWillBegin() {
 		presentingViewController.transitionCoordinator?.animate(alongsideTransition: { _ in
 			self.dimmingView?.alpha = 0.0
 		}, completion: nil)
+		
+		guard interactiveTransition?.isInteractive == true else {return}
+		guard let presentedView = presentedView else {return}
+		guard let containerView = containerView else {return}
+		guard let window = containerView.window else {return}
+		guard keyboardFrame.intersects(containerView.convert(containerView.bounds, to: nil)) else {return}
+		guard let snapshot = window.screen.snapshotView(afterScreenUpdates: false).resizableSnapshotView(from: keyboardFrame, afterScreenUpdates: true, withCapInsets: .zero) else {return}
+		snapshot.frame = containerView.convert(keyboardFrame, from: nil)
+		containerView.addSubview(snapshot)
+		keyboardSnapshotView = snapshot
+		
+		func firstResponsed(_ view: UIView) -> UIView? {
+			if view.isFirstResponder {
+				return view
+			}
+			else {
+				return view.subviews.lazy.compactMap{firstResponsed($0)}.first
+			}
+		}
+		
+		lastFirstResponder = firstResponsed(presentedView)
+		let dy = containerView.bounds.maxY - presentedView.frame.minY
+		presentingViewController.transitionCoordinator?.animate(alongsideTransition: { _ in
+			snapshot.frame.origin.y += dy
+		})
+
+		UIView.performWithoutAnimation {
+			presentedViewController.view.endEditing(false)
+		}
 	}
 	
 	override open func dismissalTransitionDidEnd(_ completed: Bool) {
@@ -119,6 +151,14 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 			dimmingView = nil
 			NotificationCenter.default.removeObserver(self)
 		}
+		else if let lastFirstResponder = lastFirstResponder {
+			UIView.performWithoutAnimation {
+				lastFirstResponder.becomeFirstResponder()
+			}
+			self.lastFirstResponder = nil
+		}
+		keyboardSnapshotView?.removeFromSuperview()
+		keyboardSnapshotView = nil
 	}
 	
 	override open func preferredContentSizeDidChange(forChildContentContainer container: UIContentContainer) {
@@ -158,7 +198,7 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 			presentedViewControllerFrame.origin.y = containerViewBounds.maxY - presentedViewContentSize.height - insets.bottom
 			presentedViewControllerFrame.origin.x = (containerViewBounds.maxX - presentedViewContentSize.width) / 2
 			
-			presentedViewControllerFrame.origin.y -= keyboardFrame.intersection(containerViewBounds).height
+			presentedViewControllerFrame.origin.y -= keyboardFrame.intersection(containerView.bounds).height
 			if (presentedViewControllerFrame.origin.y <= 40) {
 				presentedViewControllerFrame.size.height -= 40 - presentedViewControllerFrame.origin.y;
 				presentedViewControllerFrame.origin.y = 40;
@@ -210,7 +250,7 @@ open class SheetPresentationController: UIPresentationController, UIViewControll
 				presentedViewControllerFrame.size.height = presentedViewContentSize.height + arrowHeight
 			}
 			
-			presentedViewControllerFrame.origin.y -= max(presentedViewControllerFrame.maxY + max(insets.bottom, 15) - keyboardFrame.intersection(containerViewBounds).height, 0)
+			presentedViewControllerFrame.origin.y -= max(presentedViewControllerFrame.maxY + max(insets.bottom, 15) - (containerViewBounds.maxY - keyboardFrame.intersection(containerViewBounds).height), 0)
 			
 			//Reduce height if needed
 			if presentedViewControllerFrame.minY < safeArea.minY {
